@@ -1,0 +1,28 @@
+[package]
+name = "uhppote-mqtt"
+authors = ["Wouter de Bie <wouter@evenflow.nl>"]
+repository = "https://github.com/wouterdebie/uhppote-mqtt"
+description = "MQTT client for UHPPOTE devices"
+readme = "README.md"
+license = "MIT"
+version = "0.0.1"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.58"
+clap = { version = "3.2.8", features = ["derive"] }
+clap-verbosity-flag = "1.0.1"
+serde = { version= "1.0.82", features = ["derive"] }
+serde_json =  "1.0.82"
+log = "0.4.14"
+rumqttc = "0.13.0"
+slog = "2.7.0"
+slog-async = "2.7.0"
+slog-scope = "4.4.0"
+slog-stdlog = "4.1.1"
+slog-term = "2.9.0"
+sloggers = "2.1.1"
+tokio = { version ="1.17.0", features = ["rt-multi-thread"] }
+uhppote-rs = "0.0.1"
