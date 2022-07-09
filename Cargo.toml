@@ -28,4 +28,4 @@ slog-stdlog = "4.1.1"
 slog-term = "2.9.0"
 sloggers = "2.1.1"
 tokio = { version ="1.17.0", features = ["rt-multi-thread"] }
-uhppote-rs = "0.0.1"
+uhppote-rs = "0.0.3"
