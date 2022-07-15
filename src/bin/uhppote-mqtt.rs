@@ -15,8 +15,7 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 use std::time::Duration;
-use uhppote_rs::DoorControlMode;
-use uhppote_rs::{Device, Uhppoted};
+use uhppote_rs::{Device, DoorControl, DoorControlMode, Uhppoted};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -78,8 +77,8 @@ async fn main() -> Result<()> {
     // Command topic is used for device commands coming from Home Assistant
     let command_topic = format!("{}/command", &config.base_topic);
 
-    let mut uhppoted = Uhppoted::default();
-    let mut device = uhppoted.get_device(config.uhppote_device_id).unwrap();
+    let uhppoted = Uhppoted::default();
+    let device = uhppoted.get_device(config.uhppote_device_id, None);
 
     let mut mqttoptions = MqttOptions::new(&config.mqtt_id, &config.mqtt_host, config.mqtt_port);
     mqttoptions.set_keep_alive(Duration::from_secs(5));
@@ -109,7 +108,7 @@ async fn main() -> Result<()> {
         let event = eventloop.poll().await;
         match event {
             Ok(Incoming(Packet::Publish(p))) => {
-                match handle_payload(&mut device, config.door, &p.payload) {
+                match handle_payload(&device, config.door, &p.payload) {
                     Ok(Some(state)) => {
                         info!("Publishing {} to {}", &state, &state_topic);
                         client
@@ -129,16 +128,28 @@ async fn main() -> Result<()> {
     }
 }
 
-fn handle_payload(device: &mut Device, door: u8, payload: &[u8]) -> Result<Option<&'static str>> {
+fn handle_payload(device: &Device, door: u8, payload: &[u8]) -> Result<Option<&'static str>> {
     match std::str::from_utf8(payload)? {
         "LOCK" => {
             info!("Locking");
-            device.set_door_control(door, DoorControlMode::Controlled, 5)?;
+            device.set_door_control_state(
+                door,
+                DoorControl {
+                    delay: Duration::new(5, 0),
+                    mode: DoorControlMode::Controlled,
+                },
+            )?;
             Ok(Some("LOCKED"))
         }
         "UNLOCK" => {
             info!("Unlocking");
-            device.set_door_control(door, DoorControlMode::NormallyOpen, 5)?;
+            device.set_door_control_state(
+                door,
+                DoorControl {
+                    delay: Duration::new(5, 0),
+                    mode: DoorControlMode::NormallyOpen,
+                },
+            )?;
             Ok(Some("UNLOCKED"))
         }
         _ => {
