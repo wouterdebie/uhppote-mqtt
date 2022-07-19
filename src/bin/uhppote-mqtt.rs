@@ -37,6 +37,8 @@ fn file_exists(filename: &str) -> Result<String, String> {
 #[derive(Deserialize)]
 struct Config {
     uhppote_device_id: u32,
+    uhppote_device_ip: String,
+    bind: String,
     name: String,
     door: u8,
     mqtt_id: String,
@@ -77,8 +79,17 @@ async fn main() -> Result<()> {
     // Command topic is used for device commands coming from Home Assistant
     let command_topic = format!("{}/command", &config.base_topic);
 
-    let uhppoted = Uhppoted::default();
-    let device = uhppoted.get_device(config.uhppote_device_id, None);
+    let uhppoted = Uhppoted::new(
+        config.bind.parse()?,
+        "255.255.255.255".parse()?,
+        Duration::new(5, 0),
+    );
+
+    let device = uhppoted
+        .get_device(
+            config.uhppote_device_id,
+            Some(config.uhppote_device_ip.parse()?),
+        );
 
     let mut mqttoptions = MqttOptions::new(&config.mqtt_id, &config.mqtt_host, config.mqtt_port);
     mqttoptions.set_keep_alive(Duration::from_secs(5));
