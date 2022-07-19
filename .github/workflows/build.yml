@@ -20,7 +20,7 @@ jobs:
           rust: stable
           target: x86_64-unknown-linux-gnu
           cross: false
-        - build: i686
+        - build: i386
           os: ubuntu-latest
           rust: stable
           target: i686-unknown-linux-gnu
@@ -85,7 +85,7 @@ jobs:
         cd $stage
         # RELEASE_VERSION=${GITHUB_REF#refs/tags/}
         RELEASE_VERSION=nightly
-        ASSET_NAME="uhppote-mqtt-$RELEASE_VERSION-${{ matrix.target }}.tar.gz"
+        ASSET_NAME="uhppote-mqtt-$RELEASE_VERSION-${{ matrix.build }}.tar.gz"
         ASSET_PATH="$src/$ASSET_NAME"
         CHECKSUM_PATH="$ASSET_PATH.sha256"
         echo "ASSET_PATH=$ASSET_PATH" >> $GITHUB_ENV
