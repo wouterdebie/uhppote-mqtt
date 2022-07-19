@@ -68,6 +68,8 @@ jobs:
         rustup show
     - name: Build
       run: cargo build --release --target ${{ matrix.target }}
+      env:
+        RUSTFLAGS: "-C target-feature=+crt-static"
 
     - name: Package Artifacts
       run: |
