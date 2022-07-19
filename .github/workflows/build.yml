@@ -54,7 +54,10 @@ jobs:
           ~/.rustup
           target
         key: ${{ runner.os }}-${{ matrix.rust }}
-
+    - name: Install extra dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libssl-dev
     - name: Install Linker
       if: matrix.cross
       run: |
