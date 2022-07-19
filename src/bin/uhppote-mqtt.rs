@@ -58,13 +58,13 @@ struct Config {
 //   }
 #[derive(Deserialize)]
 struct MqttConfig {
-    addon: String,
+    _addon: String,
     host: String,
     port: String,
-    ssl: bool,
+    _ssl: bool,
     username: String,
     password: String,
-    protocol: String,
+    _protocol: String,
 }
 
 #[tokio::main(worker_threads = 1)]
@@ -108,8 +108,12 @@ async fn main() -> Result<()> {
         Some(config.uhppote_device_ip.parse()?),
     );
 
+    for (n, v) in std::env::vars() {
+        info!("{}: {}", n, v);
+    }
+
     // Get config from HASS
-    if std::env::var("HASS_TOKEN").is_ok() {
+    if std::env::var("SUPERVISOR_TOKEN").is_ok() {
         info!("Getting MQTT config from HASS");
         let client = reqwest::Client::new();
         let response = client
