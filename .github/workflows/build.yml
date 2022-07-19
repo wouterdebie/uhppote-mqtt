@@ -1,7 +1,9 @@
 name: Release
 
 on:
-  push
+  push:
+    tags:
+      - "v*"
 
 env:
   CARGO_TERM_COLOR: always
@@ -30,12 +32,6 @@ jobs:
           target: armv7-unknown-linux-gnueabihf
           linker: gcc-arm-linux-gnueabihf
           cross: true
-        # - build: armhf
-        #   os: ubuntu-latest
-        #   rust: stable
-        #   target: arm-unknown-linux-gnueabi
-        #   linker: gcc-arm-linux-gnueabihf
-          # cross: true
         - build: aarch64
           os: ubuntu-latest
           rust: stable
