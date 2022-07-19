@@ -3,7 +3,7 @@ extern crate slog;
 #[macro_use]
 extern crate slog_scope;
 extern crate slog_term;
-use anyhow::Result;
+use anyhow::{bail, Result};
 use clap::Parser;
 use rumqttc::{AsyncClient, Event::Incoming, MqttOptions, Packet, QoS};
 use serde::Deserialize;
@@ -38,15 +38,33 @@ fn file_exists(filename: &str) -> Result<String, String> {
 struct Config {
     uhppote_device_id: u32,
     uhppote_device_ip: String,
-    bind: String,
     name: String,
     door: u8,
     mqtt_id: String,
-    mqtt_host: String,
-    mqtt_port: u16,
-    mqtt_username: String,
-    mqtt_password: String,
+    mqtt_host: Option<String>,
+    mqtt_port: Option<u16>,
+    mqtt_username: Option<String>,
+    mqtt_password: Option<String>,
     base_topic: String,
+}
+
+//     "addon": "awesome_mqtt",
+//     "host": "172.0.0.17",
+//     "port": "8883",
+//     "ssl": true,
+//     "username": "awesome_user",
+//     "password": "strong_password",
+//     "protocol": "3.1.1"
+//   }
+#[derive(Deserialize)]
+struct MqttConfig {
+    addon: String,
+    host: String,
+    port: String,
+    ssl: bool,
+    username: String,
+    password: String,
+    protocol: String,
 }
 
 #[tokio::main(worker_threads = 1)]
@@ -66,7 +84,7 @@ async fn main() -> Result<()> {
     slog_stdlog::init().unwrap();
 
     // Read config file
-    let config: Config = serde_json::from_reader(BufReader::new(File::open(&args.config)?))?;
+    let mut config: Config = serde_json::from_reader(BufReader::new(File::open(&args.config)?))?;
 
     info!("uhppote-mqtt v{}", VERSION);
 
@@ -80,20 +98,54 @@ async fn main() -> Result<()> {
     let command_topic = format!("{}/command", &config.base_topic);
 
     let uhppoted = Uhppoted::new(
-        config.bind.parse()?,
+        "0.0.0.0:60001".parse()?,
         "255.255.255.255".parse()?,
         Duration::new(5, 0),
     );
 
-    let device = uhppoted
-        .get_device(
-            config.uhppote_device_id,
-            Some(config.uhppote_device_ip.parse()?),
-        );
+    let device = uhppoted.get_device(
+        config.uhppote_device_id,
+        Some(config.uhppote_device_ip.parse()?),
+    );
 
-    let mut mqttoptions = MqttOptions::new(&config.mqtt_id, &config.mqtt_host, config.mqtt_port);
+    // Get config from HASS
+    if std::env::var("HASS_TOKEN").is_ok() {
+        info!("Getting MQTT config from HASS");
+        let client = reqwest::Client::new();
+        let response = client
+            .get("http://supervisor/services/mqtt")
+            .header(
+                "Authorization",
+                format!("Bearer {}", std::env::var("SUPERVISOR_TOKEN").unwrap()),
+            )
+            .send()
+            .await?;
+
+        match response.status() {
+            reqwest::StatusCode::OK => {
+                let j = response.json::<MqttConfig>().await?;
+                config.mqtt_host = Some(j.host);
+                config.mqtt_port = Some(j.port.parse()?);
+                config.mqtt_username = Some(j.username);
+                config.mqtt_password = Some(j.password);
+            }
+
+            _ => {
+                bail!("Failed to get MQTT config from HASS: {}", response.status());
+            }
+        };
+    }
+
+    let mut mqttoptions = MqttOptions::new(
+        &config.mqtt_id,
+        &config.mqtt_host.expect("No MQTT host found"),
+        config.mqtt_port.expect("No MQTT port found"),
+    );
     mqttoptions.set_keep_alive(Duration::from_secs(5));
-    mqttoptions.set_credentials(&config.mqtt_username, &config.mqtt_password);
+    mqttoptions.set_credentials(
+        &config.mqtt_username.expect("No MQTT username found"),
+        &config.mqtt_password.expect("No MQTT password found"),
+    );
 
     let (client, mut eventloop) = AsyncClient::new(mqttoptions, 10);
 
