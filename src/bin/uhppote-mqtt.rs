@@ -27,6 +27,12 @@ fn file_exists(filename: &str) -> Result<String, String> {
 }
 
 #[derive(Deserialize)]
+struct HassResult {
+    result: String,
+    data: MqttConfig,
+}
+
+#[derive(Deserialize)]
 struct Config {
     uhppote_device_id: u32,
     uhppote_device_ip: String,
@@ -98,11 +104,11 @@ async fn main() -> Result<()> {
 
         match response.status() {
             reqwest::StatusCode::OK => {
-                let j = response.json::<MqttConfig>().await?;
-                config.mqtt_host = Some(j.host);
-                config.mqtt_port = Some(j.port.parse()?);
-                config.mqtt_username = Some(j.username);
-                config.mqtt_password = Some(j.password);
+                let j = response.json::<HassResult>().await?;
+                config.mqtt_host = Some(j.data.host);
+                config.mqtt_port = Some(j.data.port.parse()?);
+                config.mqtt_username = Some(j.data.username);
+                config.mqtt_password = Some(j.data.password);
             }
 
             _ => {
