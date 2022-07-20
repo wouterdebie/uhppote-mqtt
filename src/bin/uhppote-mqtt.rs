@@ -1,6 +1,6 @@
 use anyhow::{bail, Result};
 use clap::Parser;
-use log::{info, warn, error};
+use log::{error, info, warn};
 use rumqttc::{AsyncClient, Event::Incoming, MqttOptions, Packet, QoS};
 use serde::Deserialize;
 use std::fs::File;
@@ -42,20 +42,23 @@ struct Config {
 
 #[derive(Deserialize)]
 struct MqttConfig {
-    _addon: String,
+    #[allow(dead_code)]
+    addon: String,
     host: String,
     port: String,
-    _ssl: bool,
+    #[allow(dead_code)]
+    ssl: bool,
     username: String,
     password: String,
-    _protocol: String,
+    #[allow(dead_code)]
+    protocol: String,
 }
 
 #[tokio::main(worker_threads = 1)]
 async fn main() -> Result<()> {
     let args = Args::parse();
 
-        // Read config file
+    // Read config file
     let mut config: Config = serde_json::from_reader(BufReader::new(File::open(&args.config)?))?;
 
     info!("uhppote-mqtt v{}", VERSION);
