@@ -108,10 +108,6 @@ async fn main() -> Result<()> {
         Some(config.uhppote_device_ip.parse()?),
     );
 
-    for (n, v) in std::env::vars() {
-        info!("{}: {}", n, v);
-    }
-
     // Get config from HASS
     if std::env::var("SUPERVISOR_TOKEN").is_ok() {
         info!("Getting MQTT config from HASS");
