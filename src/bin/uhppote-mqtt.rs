@@ -131,8 +131,6 @@ async fn main() -> Result<()> {
         .expect("No address returned")
         .to_string();
 
-    println!("{}", address);
-
     let mut mqttoptions = MqttOptions::new(
         &config.mqtt_id,
         address,
