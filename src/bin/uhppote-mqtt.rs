@@ -51,7 +51,7 @@ struct MqttConfig {
     #[allow(dead_code)]
     addon: String,
     host: String,
-    port: String,
+    port: u16,
     #[allow(dead_code)]
     ssl: bool,
     username: String,
@@ -106,7 +106,7 @@ async fn main() -> Result<()> {
             reqwest::StatusCode::OK => {
                 let j = response.json::<HassResult>().await?;
                 config.mqtt_host = Some(j.data.host);
-                config.mqtt_port = Some(j.data.port.parse()?);
+                config.mqtt_port = Some(j.data.port);
                 config.mqtt_username = Some(j.data.username);
                 config.mqtt_password = Some(j.data.password);
             }
