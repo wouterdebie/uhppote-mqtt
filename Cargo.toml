@@ -5,7 +5,7 @@ repository = "https://github.com/wouterdebie/uhppote-mqtt"
 description = "MQTT client for UHPPOTE devices"
 readme = "README.md"
 license = "MIT"
-version = "0.0.12"
+version = "0.0.13"
 edition = "2021"
 
 [[bin]]
@@ -17,10 +17,12 @@ name = "uhppote-mqtt"
 anyhow = "1.0.58"
 clap = { version = "3.2.8", features = ["derive"] }
 clap-verbosity-flag = "1.0.1"
+env_logger = "0.9.0"
 log = "0.4.17"
 reqwest = {version = "0.11.11", features = ["json", "rustls-tls", "trust-dns"], default-features = false}
 rumqttc = "0.13.0"
 serde = { version = "1.0.82", features = ["derive"] }
 serde_json =  "1.0.82"
+trust-dns-resolver = "0.21.2"
 tokio = { version ="1.17.0", features = ["rt-multi-thread"] }
 uhppote-rs = "0.1.0"

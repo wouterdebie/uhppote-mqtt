@@ -7,6 +7,7 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 use std::time::Duration;
+use trust_dns_resolver::AsyncResolver;
 use uhppote_rs::{Device, DoorControl, DoorControlMode, Uhppoted};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -27,12 +28,6 @@ fn file_exists(filename: &str) -> Result<String, String> {
 }
 
 #[derive(Deserialize)]
-struct HassResult {
-    result: String,
-    data: MqttConfig,
-}
-
-#[derive(Deserialize)]
 struct Config {
     uhppote_device_id: u32,
     uhppote_device_ip: String,
@@ -44,6 +39,13 @@ struct Config {
     mqtt_username: Option<String>,
     mqtt_password: Option<String>,
     base_topic: String,
+}
+
+#[derive(Deserialize)]
+struct HassResult {
+    #[allow(dead_code)]
+    result: String,
+    data: MqttConfig,
 }
 
 #[derive(Deserialize)]
@@ -62,6 +64,7 @@ struct MqttConfig {
 
 #[tokio::main(worker_threads = 1)]
 async fn main() -> Result<()> {
+    env_logger::init();
     let args = Args::parse();
 
     // Read config file
@@ -117,9 +120,22 @@ async fn main() -> Result<()> {
         };
     }
 
+    // Lookup MQTT host seperately, since we don't want to use the rust resolver on Docker
+    let resolver = AsyncResolver::tokio_from_system_conf()?;
+    let response = resolver
+        .lookup_ip(&config.mqtt_host.expect("No MQTT host found"))
+        .await?;
+    let address = response
+        .iter()
+        .next()
+        .expect("No address returned")
+        .to_string();
+
+    println!("{}", address);
+
     let mut mqttoptions = MqttOptions::new(
         &config.mqtt_id,
-        &config.mqtt_host.expect("No MQTT host found"),
+        address,
         config.mqtt_port.expect("No MQTT port found"),
     );
     mqttoptions.set_keep_alive(Duration::from_secs(5));
