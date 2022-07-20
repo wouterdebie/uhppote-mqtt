@@ -1,16 +1,8 @@
-#[macro_use(slog_o)]
-extern crate slog;
-#[macro_use]
-extern crate slog_scope;
-extern crate slog_term;
 use anyhow::{bail, Result};
 use clap::Parser;
+use log::{info, warn, error};
 use rumqttc::{AsyncClient, Event::Incoming, MqttOptions, Packet, QoS};
 use serde::Deserialize;
-use slog::Drain;
-use slog::{LevelFilter, Logger};
-use slog_async::Async;
-use slog_term::{FullFormat, TermDecorator};
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
@@ -48,14 +40,6 @@ struct Config {
     base_topic: String,
 }
 
-//     "addon": "awesome_mqtt",
-//     "host": "172.0.0.17",
-//     "port": "8883",
-//     "ssl": true,
-//     "username": "awesome_user",
-//     "password": "strong_password",
-//     "protocol": "3.1.1"
-//   }
 #[derive(Deserialize)]
 struct MqttConfig {
     _addon: String,
@@ -71,19 +55,7 @@ struct MqttConfig {
 async fn main() -> Result<()> {
     let args = Args::parse();
 
-    let log_level = slog::Level::Info;
-
-    let fuse = LevelFilter::new(
-        FullFormat::new(TermDecorator::new().build()).build().fuse(),
-        log_level,
-    )
-    .fuse();
-    let logger = Logger::root(Async::new(fuse).build().fuse(), slog_o!());
-
-    let _scope_guard = slog_scope::set_global_logger(logger);
-    slog_stdlog::init().unwrap();
-
-    // Read config file
+        // Read config file
     let mut config: Config = serde_json::from_reader(BufReader::new(File::open(&args.config)?))?;
 
     info!("uhppote-mqtt v{}", VERSION);
