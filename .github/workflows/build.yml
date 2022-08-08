@@ -26,7 +26,7 @@ jobs:
           target: i686-unknown-linux-gnu
           cross: true
           extra-packages: gcc-multilib
-        - build: arm-v7
+        - build: armv7
           os: ubuntu-latest
           rust: stable
           target: armv7-unknown-linux-gnueabihf
